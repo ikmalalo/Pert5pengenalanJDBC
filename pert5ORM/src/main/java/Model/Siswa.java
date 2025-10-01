@@ -1,4 +1,4 @@
-package Model;
+package model;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -104,34 +104,136 @@ public class Siswa extends Database {
     }
 
     // Read by ID
-public static Siswa read(int id) {
-    Siswa siswa = null;
 
-    Siswa obj = new Siswa();
-    try {
-        obj.openConnection();
+    public static Siswa read(int id) {
+        Siswa siswa = null;
 
-        String sql = "SELECT * FROM siswa WHERE id = ?";
-        obj.preparedStatement = obj.connection.prepareStatement(sql);
-        obj.preparedStatement.setInt(1, id);
+        Siswa obj = new Siswa();
+        try {
+            obj.openConnection();
 
-        ResultSet rs = obj.preparedStatement.executeQuery();
-        if (rs.next()) {
-            siswa = new Siswa();
-            siswa.id = rs.getInt("id");
-            siswa.nama = rs.getString("nama");
-            siswa.kelas = rs.getString("kelas");
+            String sql = "SELECT * FROM siswa WHERE id = ?";
+            obj.preparedStatement = obj.connection.prepareStatement(sql);
+            obj.preparedStatement.setInt(1, id);  // ✅ parameter index harus 1
+
+            ResultSet rs = obj.preparedStatement.executeQuery();
+            if (rs.next()) {
+                siswa = new Siswa();
+                siswa.id = rs.getInt("id");
+                siswa.nama = rs.getString("nama");
+                siswa.kelas = rs.getString("kelas");
+            }
+
+        } catch (SQLException ex) {
+            obj.displayError(ex);
+        } finally {
+            obj.closeConnection();
+        }
+        return siswa;
+    }
+
+    // Read Last
+    public static Siswa readLast() {
+        Siswa siswa = null;
+
+        Siswa obj = new Siswa();
+        try {
+            obj.openConnection();
+
+            String sql = "SELECT * FROM siswa";
+            obj.statement = obj.connection.createStatement(
+                ResultSet.TYPE_SCROLL_INSENSITIVE, // bikin scrollable
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            ResultSet rs = obj.statement.executeQuery(sql);
+
+            if (rs.last()) { // langsung ke data terakhir
+                siswa = new Siswa();
+                siswa.id = rs.getInt("id");
+                siswa.nama = rs.getString("nama");
+                siswa.kelas = rs.getString("kelas");
+
+                System.out.println(">> LAST DATA: ID=" + siswa.id +
+                                   ", Nama=" + siswa.nama +
+                                   ", Kelas=" + siswa.kelas);
+            }
+
+        } catch (SQLException ex) {
+            obj.displayError(ex);
+        } finally {
+            obj.closeConnection();
+        }
+        return siswa;
+    }
+
+    // Test Read Previous()
+    // Baca data sebelumnya (mundur dari data terakhir)
+        public static Siswa readPrevious() {
+            Siswa siswa = null;
+            Siswa obj = new Siswa();
+
+            try {
+                obj.openConnection();
+                String sql = "SELECT * FROM siswa";
+                obj.statement = obj.connection.createStatement(
+                        ResultSet.TYPE_SCROLL_INSENSITIVE,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                ResultSet rs = obj.statement.executeQuery(sql);
+
+                // pindah ke last dulu
+                if (rs.last()) {
+                    // lalu mundur satu step (previous)
+                    if (rs.previous()) {
+                        siswa = new Siswa();
+                        siswa.id = rs.getInt("id");
+                        siswa.nama = rs.getString("nama");
+                        siswa.kelas = rs.getString("kelas");
+                    }
+                }
+
+            } catch (SQLException ex) {
+                obj.displayError(ex);
+            } finally {
+                obj.closeConnection();
+            }
+
+            return siswa;
         }
 
-    } catch (SQLException ex) {
-        obj.displayError(ex);
-    } finally {
-        obj.closeConnection();
-    }
-    return siswa;
-}
+        // read absolute ()
+        public static Siswa readByAbsolute(int posisi) {
+            Siswa siswa = null;
+            Siswa obj = new Siswa();
 
-    
+            try {
+                obj.openConnection();
+                String sql = "SELECT * FROM siswa";
+                obj.statement = obj.connection.createStatement(
+                        ResultSet.TYPE_SCROLL_INSENSITIVE,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                ResultSet rs = obj.statement.executeQuery(sql);
+
+                // Pindah langsung ke baris sesuai posisi
+                if (rs.absolute(posisi)) {
+                    siswa = new Siswa();
+                    siswa.id = rs.getInt("id");
+                    siswa.nama = rs.getString("nama");
+                    siswa.kelas = rs.getString("kelas");
+                }
+
+            } catch (SQLException ex) {
+                obj.displayError(ex);
+            } finally {
+                obj.closeConnection();
+            }
+
+            return siswa;
+        }
+
+        
     
     // Get All
 
